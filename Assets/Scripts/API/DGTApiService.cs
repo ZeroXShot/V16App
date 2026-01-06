@@ -64,7 +64,6 @@ namespace V16App.API
                 request.downloadHandler = new DownloadHandlerBuffer();
                 request.SetRequestHeader("Content-Type", "application/json");
                 request.SetRequestHeader("Accept", "application/json, text/plain, */*");
-                request.SetRequestHeader("Origin", "https://www.mapabalizav16.es");
                 
                 yield return request.SendWebRequest();
                 

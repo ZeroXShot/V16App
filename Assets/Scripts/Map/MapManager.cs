@@ -108,7 +108,7 @@ namespace V16App.Map
             double latDelta = (delta.y / scale) * 180.0;
             
             _centerLon -= lonDelta;
-            _centerLat += latDelta;
+            _centerLat -= latDelta;
             
             // Clamp latitude
             _centerLat = Mathf.Clamp((float)_centerLat, -85f, 85f);

@@ -36,6 +36,7 @@ namespace V16App.Core
         
         // Input control
         private float _lastZoomTime;
+        private bool _pinchMode;
         private const float ZOOM_COOLDOWN = 0.05f; // reduced cooldown for nicer feel but preventing explosion
         
         private void Awake()
@@ -99,7 +100,7 @@ namespace V16App.Core
         private void HandleInput()
         {
             // Keyboard zoom controls
-            if (Input.GetKeyDown(KeyCode.Plus) || Input.GetKeyDown(KeyCode.KeypadPlus))
+            if (Input.GetKeyDown(KeyCode.Plus) || Input.GetKeyDown(KeyCode.KeypadPlus) || Input.GetKeyDown(KeyCode.Equals))
                 mapManager?.ZoomIn();
             
             if (Input.GetKeyDown(KeyCode.Minus) || Input.GetKeyDown(KeyCode.KeypadMinus))
@@ -116,42 +117,40 @@ namespace V16App.Core
             if (Input.GetKeyDown(KeyCode.R) && !Input.GetKey(KeyCode.LeftControl))
                 RefreshData();
             
-            // Mouse/Trackpad scroll for zoom
+            // Mouse/Trackpad scroll for zoom - with improved sensitivity
             float scroll = Input.GetAxis("Mouse ScrollWheel");
-            if (scroll != 0)
+            if (Mathf.Abs(scroll) > 0.001f)
             {
-                // Allow zoom if not over a high-priority UI panel like Detail or Analytics
-                bool overPanel = (detailPanel != null && detailPanel.gameObject.activeSelf && EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) ||
-                                (analyticsPanel != null && analyticsPanel.gameObject.activeSelf && EventSystem.current != null && EventSystem.current.IsPointerOverGameObject());
+                // Check if over UI panels that should block zoom
+                bool overBlockingUI = IsPointerOverBlockingUI();
                 
-                // Rate limit zoom to prevent trackpad sensitivity explosion
-                if (!overPanel && Time.time - _lastZoomTime >= ZOOM_COOLDOWN)
+                // Apply zoom with rate limiting
+                if (!overBlockingUI && Time.time - _lastZoomTime >= ZOOM_COOLDOWN)
                 {
-                    mapManager?.OnScroll(scroll);
+                    // Amplify scroll for better responsiveness with trackpads
+                    float amplifiedScroll = scroll * 2f;
+                    mapManager?.OnScroll(amplifiedScroll);
                     _lastZoomTime = Time.time;
                 }
             }
             
-            // Mouse drag for pan
-            if (Input.GetMouseButtonDown(0))
+            // Middle mouse button drag for pan (button 2)
+            if (Input.GetMouseButtonDown(2))
             {
-                // Allow pan if not over a high-priority UI panel
-                bool overPanel = (detailPanel != null && detailPanel.gameObject.activeSelf && EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) ||
-                                (analyticsPanel != null && analyticsPanel.gameObject.activeSelf && EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) ||
-                                (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject() && !IsPointerOverMap());
+                bool overBlockingUI = IsPointerOverBlockingUI();
                 
-                if (!overPanel)
+                if (!overBlockingUI)
                 {
                     mapManager?.OnDragStart(Input.mousePosition);
                 }
             }
             
-            if (Input.GetMouseButton(0))
+            if (Input.GetMouseButton(2))
             {
                 mapManager?.OnDrag(Input.mousePosition);
             }
             
-            if (Input.GetMouseButtonUp(0))
+            if (Input.GetMouseButtonUp(2))
             {
                 mapManager?.OnDragEnd();
             }
@@ -160,31 +159,77 @@ namespace V16App.Core
             HandleTouchInput();
         }
         
+        private bool IsPointerOverBlockingUI()
+        {
+            if (EventSystem.current == null) return false;
+            
+            // Check if detail panel or analytics panel is open and pointer is over them
+            if (detailPanel != null && detailPanel.gameObject.activeSelf)
+            {
+                GameObject panelRoot = detailPanel.gameObject.transform.parent?.gameObject ?? detailPanel.gameObject;
+                if (IsPointerOverGameObject(panelRoot))
+                    return true;
+            }
+            
+            if (analyticsPanel != null && analyticsPanel.gameObject.activeSelf)
+            {
+                GameObject panelRoot = analyticsPanel.gameObject.transform.parent?.gameObject ?? analyticsPanel.gameObject;
+                if (IsPointerOverGameObject(panelRoot))
+                    return true;
+            }
+            
+            return false;
+        }
+        
+        private bool IsPointerOverGameObject(GameObject target)
+        {
+            PointerEventData pointerData = new PointerEventData(EventSystem.current);
+            pointerData.position = Input.mousePosition;
+            
+            System.Collections.Generic.List<RaycastResult> results = new System.Collections.Generic.List<RaycastResult>();
+            EventSystem.current.RaycastAll(pointerData, results);
+            
+            foreach (var result in results)
+            {
+                if (result.gameObject == target || result.gameObject.transform.IsChildOf(target.transform))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
         private void HandleTouchInput()
         {
             if (Input.touchCount == 1)
             {
                 Touch touch = Input.GetTouch(0);
                 
-                if (!EventSystem.current.IsPointerOverGameObject(touch.fingerId))
+                // Skip if over UI element
+                if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(touch.fingerId))
+                    return;
+                
+                switch (touch.phase)
                 {
-                    switch (touch.phase)
-                    {
-                        case TouchPhase.Began:
-                            mapManager?.OnDragStart(touch.position);
-                            break;
-                        case TouchPhase.Moved:
+                    case TouchPhase.Began:
+                        _pinchMode = false;
+                        mapManager?.OnDragStart(touch.position);
+                        break;
+                    case TouchPhase.Moved:
+                        if (!_pinchMode)
                             mapManager?.OnDrag(touch.position);
-                            break;
-                        case TouchPhase.Ended:
-                        case TouchPhase.Canceled:
-                            mapManager?.OnDragEnd();
-                            break;
-                    }
+                        break;
+                    case TouchPhase.Ended:
+                    case TouchPhase.Canceled:
+                        mapManager?.OnDragEnd();
+                        break;
                 }
             }
             else if (Input.touchCount == 2)
             {
+                _pinchMode = true;
+                mapManager?.OnDragEnd(); // Cancel any drag
+                
                 // Pinch to zoom
                 Touch touch0 = Input.GetTouch(0);
                 Touch touch1 = Input.GetTouch(1);
@@ -197,10 +242,16 @@ namespace V16App.Core
                 
                 float difference = currentMagnitude - prevMagnitude;
                 
-                if (Mathf.Abs(difference) > 10f)
+                // Threshold for pinch detection
+                if (Mathf.Abs(difference) > 5f && Time.time - _lastZoomTime >= ZOOM_COOLDOWN)
                 {
-                    mapManager?.OnScroll(difference * 0.01f);
+                    mapManager?.OnScroll(difference * 0.02f);
+                    _lastZoomTime = Time.time;
                 }
+            }
+            else if (Input.touchCount == 0)
+            {
+                _pinchMode = false;
             }
         }
         
