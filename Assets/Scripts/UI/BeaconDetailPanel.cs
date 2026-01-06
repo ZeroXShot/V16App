@@ -133,7 +133,7 @@ namespace V16App.UI
             csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             
             VerticalLayoutGroup vlg = contentObj.AddComponent<VerticalLayoutGroup>();
-            vlg.padding = new RectOffset(16, 16, 16, 16);
+            vlg.padding = new RectOffset(20, 20, 20, 20);
             vlg.spacing = 12;
             vlg.childAlignment = TextAnchor.UpperCenter;
             vlg.childControlWidth = true;
@@ -164,7 +164,7 @@ namespace V16App.UI
             headerBg.color = headerColor;
             
             VerticalLayoutGroup hlg = headerObj.AddComponent<VerticalLayoutGroup>();
-            hlg.padding = new RectOffset(12, 40, 12, 12);
+            hlg.padding = new RectOffset(16, 45, 12, 12);
             hlg.spacing = 8;
             hlg.childAlignment = TextAnchor.UpperLeft;
             hlg.childControlWidth = true;
@@ -290,7 +290,7 @@ namespace V16App.UI
             {
                 VerticalLayoutGroup vlg = section.AddComponent<VerticalLayoutGroup>();
                 vlg.spacing = 8;
-                vlg.padding = new RectOffset(0, 0, 0, 8);
+                vlg.padding = new RectOffset(4, 4, 0, 8);
                 vlg.childControlWidth = true;
                 vlg.childControlHeight = true;
                 vlg.childForceExpandWidth = true;
@@ -316,8 +316,8 @@ namespace V16App.UI
             Text labelText = CreateText(row.transform, "Label", label + ":", 13, FontStyle.Normal);
             labelText.color = labelColor;
             LayoutElement labelLE = labelText.gameObject.AddComponent<LayoutElement>();
-            labelLE.minWidth = 90;
-            labelLE.preferredWidth = 90;
+            labelLE.minWidth = 100;
+            labelLE.preferredWidth = 100;
             
             Text valueText = CreateText(row.transform, "Value", value, 13, FontStyle.Normal);
             valueText.color = textColor;
@@ -339,8 +339,8 @@ namespace V16App.UI
             text.fontSize = fontSize;
             text.fontStyle = style;
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.horizontalOverflow = HorizontalWrapMode.Overflow;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
             text.color = textColor;
             
             ContentSizeFitter csf = obj.AddComponent<ContentSizeFitter>();

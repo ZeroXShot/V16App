@@ -32,13 +32,27 @@ namespace V16App.UI
         
         private void LoadIcons()
         {
+            // Try loading as Sprite first
             _zoomInSprite = Resources.Load<Sprite>("icons/zoomIn");
             _zoomOutSprite = Resources.Load<Sprite>("icons/zoomOut");
             
+            // Fallback: load as Texture2D and create sprites
             if (_zoomInSprite == null)
-                Debug.LogWarning("[UIStyleManager] Could not load zoomIn icon");
+            {
+                Texture2D texIn = Resources.Load<Texture2D>("icons/zoomIn");
+                if (texIn != null)
+                {
+                    _zoomInSprite = Sprite.Create(texIn, new Rect(0, 0, texIn.width, texIn.height), new Vector2(0.5f, 0.5f));
+                }
+            }
             if (_zoomOutSprite == null)
-                Debug.LogWarning("[UIStyleManager] Could not load zoomOut icon");
+            {
+                Texture2D texOut = Resources.Load<Texture2D>("icons/zoomOut");
+                if (texOut != null)
+                {
+                    _zoomOutSprite = Sprite.Create(texOut, new Rect(0, 0, texOut.width, texOut.height), new Vector2(0.5f, 0.5f));
+                }
+            }
         }
         
         private void SetupZoomButtons()
