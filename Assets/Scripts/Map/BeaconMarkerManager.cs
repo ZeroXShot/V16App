@@ -190,6 +190,7 @@ namespace V16App.Map
             marker.transform.SetParent(markersContainer, false);
             
             RectTransform rt = marker.AddComponent<RectTransform>();
+            rt.pivot = new Vector2(0.5f, 0.5f);
             rt.sizeDelta = new Vector2(individualMarkerSize, individualMarkerSize);
             rt.anchoredPosition = position;
             
@@ -260,6 +261,7 @@ namespace V16App.Map
             float size = Mathf.Lerp(clusterMinSize, clusterMaxSize, Mathf.Clamp01((cluster.Count - minClusterSize) / 20f));
             
             RectTransform rt = marker.AddComponent<RectTransform>();
+            rt.pivot = new Vector2(0.5f, 0.5f);
             rt.sizeDelta = new Vector2(size, size);
             rt.anchoredPosition = position;
             

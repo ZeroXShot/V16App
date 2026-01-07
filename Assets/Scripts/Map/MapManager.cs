@@ -131,8 +131,27 @@ namespace V16App.Map
             }
             _loadedTiles.Clear();
             
-            // Calculate center tile
-            var centerTile = LatLonToTile(_centerLat, _centerLon, _currentZoom);
+            // Calculate global pixel coordinates of center
+            double totalTiles = Math.Pow(2, _currentZoom);
+            double totalPixels = totalTiles * tileSize;
+            
+            double centerX = (_centerLon + 180.0) / 360.0 * totalPixels;
+            double centerY = (1.0 - Math.Log(Math.Tan(_centerLat * Math.PI / 180.0) + 
+                            1.0 / Math.Cos(_centerLat * Math.PI / 180.0)) / Math.PI) / 2.0 * totalPixels;
+            
+            // Calculate which tile contains the center
+            int centerTileX = (int)(centerX / tileSize);
+            int centerTileY = (int)(centerY / tileSize);
+            
+            // Calculate offset within the center tile
+            double offX = centerX - (centerTileX * tileSize);
+            double offY = centerY - (centerTileY * tileSize);
+            
+            // Calculate correction to center the specific pixel at screen (0,0)
+            // P_tl = (-offX, offY)
+            // Current P_tl is (-128, 128) (tileSize/2)
+            // Correction = (tileSize/2 - offX, offY - tileSize/2)
+            Vector2 tileOffset = new Vector2((float)(tileSize / 2.0 - offX), (float)(offY - tileSize / 2.0));
             
             // Load tiles around center
             int halfTiles = tilesPerAxis / 2;
@@ -141,33 +160,32 @@ namespace V16App.Map
             {
                 for (int dy = -halfTiles; dy <= halfTiles; dy++)
                 {
-                    int tileX = centerTile.x + dx;
-                    int tileY = centerTile.y + dy;
+                    int tileX = centerTileX + dx;
+                    int tileY = centerTileY + dy;
                     
                     // Wrap tile X
-                    int maxTile = (int)Math.Pow(2, _currentZoom);
+                    int maxTile = (int)totalTiles;
                     while (tileX < 0) tileX += maxTile;
                     while (tileX >= maxTile) tileX -= maxTile;
                     
                     // Skip invalid Y tiles
                     if (tileY < 0 || tileY >= maxTile) continue;
                     
-                    StartCoroutine(LoadTile(tileX, tileY, _currentZoom, dx, dy));
+                    StartCoroutine(LoadTile(tileX, tileY, _currentZoom, dx, dy, tileOffset));
                 }
             }
         }
         
-        private IEnumerator LoadTile(int x, int y, int z, int offsetX, int offsetY)
+        private IEnumerator LoadTile(int x, int y, int z, int offsetX, int offsetY, Vector2 alignmentOffset)
         {
             string tileKey = $"{z}/{x}/{y}";
             string url = tileUrlTemplate.Replace("{z}", z.ToString())
                                         .Replace("{x}", x.ToString())
                                         .Replace("{y}", y.ToString());
             
-            // Check cache
             if (_tileCache.TryGetValue(tileKey, out Texture2D cachedTex))
             {
-                CreateTileImage(cachedTex, offsetX, offsetY, tileKey);
+                CreateTileImage(cachedTex, offsetX, offsetY, tileKey, alignmentOffset);
                 yield break;
             }
             
@@ -180,12 +198,12 @@ namespace V16App.Map
                 {
                     Texture2D texture = DownloadHandlerTexture.GetContent(request);
                     _tileCache[tileKey] = texture;
-                    CreateTileImage(texture, offsetX, offsetY, tileKey);
+                    CreateTileImage(texture, offsetX, offsetY, tileKey, alignmentOffset);
                 }
             }
         }
         
-        private void CreateTileImage(Texture2D texture, int offsetX, int offsetY, string key)
+        private void CreateTileImage(Texture2D texture, int offsetX, int offsetY, string key, Vector2 alignmentOffset)
         {
             if (_loadedTiles.ContainsKey(key)) return;
             
@@ -197,7 +215,8 @@ namespace V16App.Map
             
             RectTransform rt = tileObj.GetComponent<RectTransform>();
             rt.sizeDelta = new Vector2(tileSize, tileSize);
-            rt.anchoredPosition = new Vector2(offsetX * tileSize, -offsetY * tileSize);
+            // Apply grid position + sub-tile alignment correction
+            rt.anchoredPosition = new Vector2(offsetX * tileSize, -offsetY * tileSize) + alignmentOffset;
             
             _loadedTiles[key] = img;
         }
