@@ -1386,23 +1386,23 @@ MonoBehaviour:
       serializedVersion: 2
       x: 0
       y: 21
-      width: 1098
-      height: 695
-    m_Scale: {x: 0.571875, y: 0.571875}
-    m_Translation: {x: 549, y: 347.49997}
+      width: 270
+      height: 283
+    m_Scale: {x: 0.140625, y: 0.140625}
+    m_Translation: {x: 135, y: 141.5}
     m_MarginLeft: 0
     m_MarginRight: 0
     m_MarginTop: 0
     m_MarginBottom: 0
     m_LastShownAreaInsideMargins:
       serializedVersion: 2
-      x: -960.00006
-      y: -607.65027
-      width: 1920.0001
-      height: 1215.3005
+      x: -960
+      y: -1006.2222
+      width: 1920
+      height: 2012.4445
     m_MinimalGUI: 1
-  m_defaultScale: 0.571875
-  m_LastWindowPixelSize: {x: 1098, y: 716}
+  m_defaultScale: 0.140625
+  m_LastWindowPixelSize: {x: 270, y: 304}
   m_ClearInEditMode: 1
   m_NoCameraWarning: 1
   m_LowResolutionForAspectRatios: 01000000000000000000

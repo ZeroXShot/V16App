@@ -19,7 +19,7 @@ namespace V16App.Map
         [SerializeField] private double initialLatitude = 40.4168;  // Madrid
         [SerializeField] private double initialLongitude = -3.7038;
         [SerializeField] private int tileSize = 256;
-        [SerializeField] private int tilesPerAxis = 5;
+        [SerializeField] private int tilesPerAxis = 9;
         
         [Header("Tile Providers")]
         [SerializeField] private string tileUrlTemplate = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";

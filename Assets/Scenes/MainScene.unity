@@ -461,7 +461,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 400000}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c4d0b63b20103de4a9c047dc3f2861b1, type: 3}
   m_Name: 
@@ -1517,7 +1517,7 @@ MonoBehaviour:
   initialLatitude: 40.4168
   initialLongitude: -3.7038
   tileSize: 256
-  tilesPerAxis: 5
+  tilesPerAxis: 11
   tileUrlTemplate: https://tile.openstreetmap.org/{z}/{x}/{y}.png
   minZoom: 4
   maxZoom: 18
